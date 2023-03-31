@@ -1,29 +1,25 @@
-# Muilti-Stage
-# https://cloudnweb.dev/2019/10/crafting-multi-stage-builds-with-docker-in-node-js/
+#https://progressivecoder.com/docker-multi-stage-build-for-running-react-application-on-nginx-server/
+#Specify a base image
+FROM node:19-alpine as builder 
 
-# Build Stage 1
-# This build created a staging docker image
-#
-FROM node:10.15.2-alpine AS appbuild
-RUN apk update & apk add yarn
+#Specify a working directory
+WORKDIR /app
 
-WORKDIR /usr/src/app
-COPY package.json package-lock.json ./
-COPY yarn.lock ./
+#Copy the dependencies file
+COPY package.json package-lock.json yarn.lock ./
+
+#Install dependencies
 RUN yarn install
-COPY ./src ./src
-RUN yarn run build
 
-# Build Stage 2
-# This build takes the production build from staging build
-#
-FROM node:10.15.2-alpine
-RUN apk update & apk add yarn
+#Copy remaining files
+COPY . .
 
-WORKDIR /usr/src/app
-COPY package.json package-lock.json ./
-COPY yarn.lock ./
-RUN yarn install
-COPY --from=appbuild /usr/src/app/dist ./dist
-EXPOSE 3000
-CMD yarn start
+#Build the project for production
+RUN yarn run build 
+
+#Run Stage Start
+FROM nginx:1.23.4-alpine
+
+#Copy production build files from builder phase to nginx
+COPY --from=builder /app/build /usr/share/nginx/html
+COPY default.conf /etc/nginx/conf.d/

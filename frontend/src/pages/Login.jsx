@@ -18,6 +18,7 @@ export default function Login() {
     theme: "dark",
   };
   useEffect(() => {
+
     if (localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)) {
       navigate("/");
     }

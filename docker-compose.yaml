@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  webproxy:
+    image: snappy-frontend
+    build: frontend
+    container_name: snappy-frontend
+    environment:
+      - REACT_APP_LOCALHOST_KEY=chat-app-current-user
+      - PORT=3000
+      - SHAPPY_SERVER_URL=http://backend:5000
+    ports:
+      - "8090:80"
+    depends_on:
+      - backend
+
+  backend:
+    image: snappy-server
+    build: backend
+    container_name: "snappy-server"
+    environment:
+      - PORT=5000
+      - MONGO_URL=mongodb://db:27017/chat
+      - SHAPPY_FRONTEND_URL=http://webproxy:3000
+    depends_on:
+      - db
+
+  db:
+    image: mongo:latest
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    healthcheck:
+      test: ["CMD","mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    # ports:
+    #   - 27019:27017
+    volumes:
+      - mongodb_data_container:/data/db
+
+
+volumes:
+  mongodb_data_container:
